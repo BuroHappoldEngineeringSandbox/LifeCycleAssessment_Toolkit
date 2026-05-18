@@ -1,1 +1,1 @@
-// ci validation trigger
+// ci validation trigger - serialisation/versioning controlled failure
