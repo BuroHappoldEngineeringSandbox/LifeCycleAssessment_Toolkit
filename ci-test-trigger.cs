@@ -1,1 +1,1 @@
-// ci validation trigger - serialisation/versioning controlled failure
+// ci validation trigger - versioning fix verification (PR #52)
