@@ -1,0 +1,37 @@
+name: zz-forksim
+
+# Reproduces the half of a fork pull request that decides whether the coverage
+# comment can be posted: a read-only GITHUB_TOKEN and no repository secrets.
+# A same-org fork cannot be used as a pull-request head, so the token's
+# permission set is reproduced directly instead.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read          # exactly what a fork PR's GITHUB_TOKEN gets
+
+jobs:
+  fork-token-sim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Make something for the comment to carry
+        run: |
+          mkdir -p CodeCoverage
+          printf '## Coverage\n\nProbe body.\n' > CodeCoverage/SummaryGithub.md
+
+      - name: Add Coverage PR Comment, as the action does it
+        id: comment
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        with:
+          recreate: false
+          path: CodeCoverage/SummaryGithub.md
+          number: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: What happened
+        if: always()
+        run: |
+          echo "FORKSIM|comment_outcome=${{ steps.comment.outcome }}|conclusion=${{ steps.comment.conclusion }}"
