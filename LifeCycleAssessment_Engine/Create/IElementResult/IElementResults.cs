@@ -50,8 +50,8 @@ namespace BH.Engine.LifeCycleAssessment
         [Output("results", "Created element results")]
         public static List<IElementResult<MaterialResult>> IElementResults(IComparable objectId, ScopeType scope, ObjectCategory category, IEnumerable<MaterialResult> materialResults)
         {
-            if (materialResults.IsNullOrEmpty())
-                return new List<IElementResult<MaterialResult>>();
+            if ( materialResults.IsNullOrEmpty() )
+                return new List<IElementResult<MaterialResult>>(); // changed-lines probe
 
             List<IElementResult<MaterialResult>> elementResults = new List<IElementResult<MaterialResult>>();
 
@@ -84,7 +84,7 @@ namespace BH.Engine.LifeCycleAssessment
 
             var nonCombinedModules = castResults.SelectMany(x => x.Indicators.Keys).Distinct().Except(totalResults.Keys).ToList();
             if (nonCombinedModules.Count > 0)
-                BH.Engine.Base.Compute.RecordNote($"MaterialResults that make up ElementResult of type {typeof(T).Name} contains modules not present in all material results. These are ommited when creating the Combined results for the element. The information about these modules can be found on the {nameof(BH.oM.LifeCycleAssessment.Results.ElementResult<T>.MaterialResults)}");
+                BH.Engine.Base.Compute.RecordNote($"MaterialResults that make up ElementResult of type {typeof(T).Name} contains modules not present in all material results. These are ommited when creating the Combined results for the element. The information about these modules can be found on the {nameof(BH.oM.LifeCycleAssessment.Results.ElementResult<T>.MaterialResults)}"); // changed-lines probe
 
             //Call final create
             return Create.ElementResult<T>(objectId, scope, category, castResults, totalResults);
