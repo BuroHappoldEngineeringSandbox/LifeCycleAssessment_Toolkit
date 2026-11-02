@@ -1,0 +1,91 @@
+name: zz-covsum
+
+# Option (c), irongut/CodeCoverageSummary, over the same merged Cobertura the
+# summary step reads. The action is `using: docker`, so the windows job exists
+# to record what that does on the runner ci-unit-tests actually pins.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Run whose coverage-report artifact holds Cobertura.xml
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch the merged Cobertura
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download ${{ inputs.run_id }} -R ${{ github.repository }} \
+            -n coverage-report-${{ inputs.run_id }} -D cov
+          ls -la cov/Cobertura.xml
+
+      - name: irongut/CodeCoverageSummary
+        id: covsum
+        continue-on-error: true
+        uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95 # v1.3.0
+        with:
+          filename: cov/Cobertura.xml
+          format: markdown
+          badge: 'false'
+          indicators: 'false'
+          hide_complexity: 'true'
+          hide_branch_rate: 'false'
+          fail_below_min: 'false'
+          output: both
+
+      - name: What it produced
+        if: always()
+        run: |
+          echo "OUTCOME|${{ steps.covsum.outcome }}"
+          if [ -f code-coverage-results.md ]; then
+            wc -c code-coverage-results.md
+            echo '--- BEGIN ---'
+            cat code-coverage-results.md
+            echo '--- END ---'
+          else
+            echo 'no code-coverage-results.md'
+          fi
+
+      - name: Upload it
+        if: always() && hashFiles('code-coverage-results.md') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: covsum-${{ github.run_id }}
+          path: code-coverage-results.md
+          retention-days: 7
+
+  windows:
+    runs-on: windows-2025-vs2026
+    steps:
+      - name: A one-line Cobertura, enough to invoke the action
+        shell: pwsh
+        run: |
+          @'
+          <?xml version="1.0"?>
+          <coverage line-rate="0.5" branch-rate="0.5" lines-covered="1" lines-valid="2" branches-covered="1" branches-valid="2" version="1.9" timestamp="0">
+          <sources><source>/x</source></sources>
+          <packages><package name="P" line-rate="0.5" branch-rate="0.5" complexity="0"><classes/></package></packages>
+          </coverage>
+          '@ | Set-Content -Path tiny.xml -Encoding utf8
+
+      - name: irongut/CodeCoverageSummary on the runner ci-unit-tests pins
+        id: covsum
+        continue-on-error: true
+        uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95 # v1.3.0
+        with:
+          filename: tiny.xml
+          format: markdown
+          output: console
+
+      - name: Outcome
+        if: always()
+        shell: pwsh
+        run: Write-Host "WINDOWS_OUTCOME|${{ steps.covsum.outcome }}"
