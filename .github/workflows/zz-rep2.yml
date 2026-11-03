@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: ci-unit-tests with the summary and changed-lines coverage
         continue-on-error: true
-        uses: BuroHappoldEngineeringSandbox/CI_Toolkit/.github/actions/ci-unit-tests@probe/ut-report-rebased
+        uses: BuroHappoldEngineeringSandbox/CI_Toolkit/.github/actions/ci-unit-tests@probe/ut-slim
         with:
           app_id: ${{ secrets.BHOM_APP_ID }}
           private_key: ${{ secrets.BHOM_APP_PRIVATE_KEY }}
