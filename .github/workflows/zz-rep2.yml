@@ -1,23 +1,33 @@
 name: zz-rep2
 
-# The reporting/coverage branch, run with contents: read only, to show that
-# nothing in the job needs write access now the PR comment is gone.
+# ci-unit-tests reporting by tooling (probe/ut-tool) beside develop's
+# action (probe/ut-develop-ref, = de70a81), so verdicts can be compared.
 
 on:
   workflow_dispatch:
-  pull_request:
 
 permissions:
   contents: read
 
 jobs:
-  run:
+  tool:
     runs-on: windows-2025-vs2026
     timeout-minutes: 60
     steps:
-      - name: ci-unit-tests with the summary and changed-lines coverage
+      - name: ci-unit-tests, reporting by tooling
         continue-on-error: true
-        uses: BuroHappoldEngineeringSandbox/CI_Toolkit/.github/actions/ci-unit-tests@probe/ut-report-rebased
+        uses: BuroHappoldEngineeringSandbox/CI_Toolkit/.github/actions/ci-unit-tests@probe/ut-tool
+        with:
+          app_id: ${{ secrets.BHOM_APP_ID }}
+          private_key: ${{ secrets.BHOM_APP_PRIVATE_KEY }}
+
+  develop:
+    runs-on: windows-2025-vs2026
+    timeout-minutes: 60
+    steps:
+      - name: ci-unit-tests, develop
+        continue-on-error: true
+        uses: BuroHappoldEngineeringSandbox/CI_Toolkit/.github/actions/ci-unit-tests@probe/ut-develop-ref
         with:
           app_id: ${{ secrets.BHOM_APP_ID }}
           private_key: ${{ secrets.BHOM_APP_PRIVATE_KEY }}
