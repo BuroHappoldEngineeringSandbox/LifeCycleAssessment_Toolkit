@@ -1,7 +1,7 @@
 name: zz-rep2
 
-# ci-unit-tests reporting by tooling (probe/ut-tool) beside develop's
-# action (probe/ut-develop-ref, = de70a81), so verdicts can be compared.
+# ci-unit-tests with the run moved into a script (probe/ut-ps) beside develop
+# (probe/ut-develop-ref), so summaries, annotations and verdicts can be compared.
 
 on:
   workflow_dispatch:
@@ -10,16 +10,20 @@ permissions:
   contents: read
 
 jobs:
-  tool:
+  script:
     runs-on: windows-2025-vs2026
     timeout-minutes: 60
     steps:
-      - name: ci-unit-tests, reporting by tooling
+      - name: ci-unit-tests, run in a script
         continue-on-error: true
-        uses: BuroHappoldEngineeringSandbox/CI_Toolkit/.github/actions/ci-unit-tests@probe/ut-tool
+        uses: BuroHappoldEngineeringSandbox/CI_Toolkit/.github/actions/ci-unit-tests@probe/ut-ps
         with:
           app_id: ${{ secrets.BHOM_APP_ID }}
           private_key: ${{ secrets.BHOM_APP_PRIVATE_KEY }}
+      - name: Dump step summaries
+        if: always()
+        shell: pwsh
+        run: Get-ChildItem (Split-Path $env:GITHUB_STEP_SUMMARY) -Filter 'step_summary_*' | Sort-Object LastWriteTime | ForEach-Object { Write-Host "SUMMARYFILE|$($_.Name)|$($_.Length)"; Get-Content $_.FullName | ForEach-Object { Write-Host "SUMMARYLINE|$_" } }
 
   develop:
     runs-on: windows-2025-vs2026
@@ -31,3 +35,7 @@ jobs:
         with:
           app_id: ${{ secrets.BHOM_APP_ID }}
           private_key: ${{ secrets.BHOM_APP_PRIVATE_KEY }}
+      - name: Dump step summaries
+        if: always()
+        shell: pwsh
+        run: Get-ChildItem (Split-Path $env:GITHUB_STEP_SUMMARY) -Filter 'step_summary_*' | Sort-Object LastWriteTime | ForEach-Object { Write-Host "SUMMARYFILE|$($_.Name)|$($_.Length)"; Get-Content $_.FullName | ForEach-Object { Write-Host "SUMMARYLINE|$_" } }
